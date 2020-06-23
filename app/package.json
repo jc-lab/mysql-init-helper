@@ -1,0 +1,35 @@
+{
+  "name": "mysql-init-helper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "npm run test:lint && npm run test:mocha",
+    "test:mocha": "mocha -r ts-node/register --recursive ./test/**/*.ts",
+    "test:lint": "eslint --ext \".js,.ts\" ./",
+    "lint:fix": "eslint --ext \".js,.ts\" --fix ./src",
+    "prepack": "npm run test && npm run build",
+    "build": "webpack"
+  },
+  "keywords": [
+    "docker",
+    "initializer",
+    "mysql",
+    "db-init"
+  ],
+  "author": {
+    "name": "Joseph Lee",
+    "email": "development@jc-lab.net"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "@types/mysql": "^2.15.14",
+    "@types/node": "^14.0.13",
+    "eslint": "^7.3.1",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  }
+}

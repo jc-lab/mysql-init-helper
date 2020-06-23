@@ -1,0 +1,8 @@
+lib/**
+test/unit/coverage/**
+test/unit/*.js
+test/e2e/*.js
+node_modules/**
+dist/**
+dist-ts/**
+
