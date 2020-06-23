@@ -4,8 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "npm run test:lint && npm run test:mocha",
-    "test:mocha": "mocha -r ts-node/register --recursive ./test/**/*.ts",
+    "test": "npm run test:lint",
     "test:lint": "eslint --ext \".js,.ts\" ./",
     "lint:fix": "eslint --ext \".js,.ts\" --fix ./src",
     "prepack": "npm run test && npm run build",
