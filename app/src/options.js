@@ -49,6 +49,10 @@ const OPTIONS = {
   'save-db-password': {
     hasValue: REQUIRE_VALUE,
     defaultValue: false
+  },
+  'sql-file': {
+    hasValue: REQUIRE_VALUE,
+    isArray: true
   }
 };
 
@@ -81,7 +85,14 @@ function parseArgs() {
       if (optionDefine.transform) {
         optValue = optionDefine.transform(optValue);
       }
-      parsedOptions[optName] = optValue;
+      if (optionDefine.isArray) {
+        if (!parsedOptions[optName]) {
+          parsedOptions[optName] = [];
+        }
+        parsedOptions[optName].push(optValue);
+      } else {
+        parsedOptions[optName] = optValue;
+      }
     }
   }
   Object.keys(OPTIONS)

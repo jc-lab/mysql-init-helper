@@ -118,31 +118,56 @@ readStdin()
           }
         }));
       })
-      .then(() => new Promise((resolve, reject) => {
+      .then(() => new Promise((rootResolve, rootReject) => {
         targetDbPool.getConnection((connErr, db) => {
           if (connErr) {
-            reject(connErr);
+            rootReject(connErr);
             return ;
           }
 
-          const connResolve = () => {
-            db.release();
-            resolve();
-          };
-          const connReject = (e) => {
-            db.release();
-            reject(e);
-          };
+          Promise.resolve()
+            .then(() => options['sql-file'] ? options['sql-file'].reduce(
+              (prev, cur) => {
+                return prev
+                  .then(() => new Promise((resolve, reject) => {
+                    fs.readFile(cur, (err, data) => {
+                      if (err) {
+                        reject(err);
+                        return;
+                      }
 
-          db.query(sqlSchema, (err, result) => {
-            if (err) {
-              if (!options['ignore-query-error']) {
-                connReject(err);
-                return ;
-              }
-            }
-            connResolve();
-          });
+                      db.query(data.toString(), (err, result) => {
+                        if (err) {
+                          if (!options['ignore-query-error']) {
+                            reject(err);
+                            return;
+                          }
+                        }
+                        resolve();
+                      });
+                    });
+                  }));
+              }, Promise.resolve()
+            ) : Promise.resolve())
+            .then(() => sqlSchema ? new Promise((resolve, reject) => {
+              db.query(sqlSchema, (err, result) => {
+                if (err) {
+                  if (!options['ignore-query-error']) {
+                    reject(err);
+                    return;
+                  }
+                }
+                resolve();
+              });
+            }) : Promise.resolve())
+            .then(() => {
+              db.release();
+              rootResolve();
+            })
+            .catch(e => {
+              db.release();
+              rootReject(e);
+            });
         });
       }));
   })
