@@ -41,6 +41,9 @@ const targetDbPool = mysql.createPool({
 });
 
 function readStdin() {
+  if (process.stdin.isTTY) {
+    return Promise.resolve(null);
+  }
   const stdinChunkList = [];
   return new Promise((resolve, reject) => {
     process.stdin
@@ -67,7 +70,6 @@ readStdin()
         const createUser = options['create-user'];
         const createDb = options['create-db'];
         const grantPrivileges = options['grant-privileges'];
-        console.log(options);
 
         if (createUser || createDb) {
           adminDbPool.getConnection((connErr, db) => {
