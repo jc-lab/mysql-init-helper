@@ -28,4 +28,4 @@ module.exports = {
     'no-constant-condition': 'off',
     'no-control-regex': 'off'
   }
-}
+};
