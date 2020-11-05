@@ -40,6 +40,10 @@ const targetDbPool = mysql.createPool({
   multipleStatements: true
 });
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
 function readStdin() {
   if (process.stdin.isTTY) {
     return Promise.resolve(null);
@@ -138,15 +142,47 @@ readStdin()
                         return;
                       }
 
-                      db.query(data.toString(), (err, result) => {
-                        if (err) {
-                          if (!options['ignore-query-error']) {
-                            reject(err);
-                            return;
+                      const sqlList = [];
+                      let sqlContentBuf = data.toString();
+                      let foundDelimiter;
+                      do {
+                        foundDelimiter = /(^|\s)DELIMITER ([^ \r\n\s]+)/.exec(sqlContentBuf);
+                        if (foundDelimiter) {
+                          const delimiterText = foundDelimiter[2];
+                          sqlList.push(sqlContentBuf.substring(0, foundDelimiter.index));
+
+                          sqlContentBuf = sqlContentBuf.substring(foundDelimiter.index + foundDelimiter[0].length);
+                          const foundEnd = new RegExp(`${escapeRegExp(delimiterText)}([\\r\\n\\t ]*;)?([\\r\\n\\t ]*DELIMITER[\\r\\n\\t ]*;)?`).exec(sqlContentBuf);
+                          if (!foundEnd) {
+                            return Promise.reject(new Error(`Could not find end delimiter: '${delimiterText}'`));
                           }
+
+                          const part = sqlContentBuf.substring(0, foundEnd.index);
+                          sqlList.push(part);
+
+                          sqlContentBuf = sqlContentBuf.substring(foundEnd.index + foundEnd[0].length);
+                        } else {
+                          sqlList.push(sqlContentBuf);
                         }
-                        resolve();
-                      });
+                      } while (foundDelimiter);
+
+                      const executeQueryPart = (index) => {
+                        if (index >= sqlList.length) {
+                          resolve();
+                          return ;
+                        }
+                        const sql = sqlList[index];
+                        db.query(sql, (err, result) => {
+                          if (err) {
+                            if (!options['ignore-query-error']) {
+                              reject(err);
+                              return;
+                            }
+                          }
+                          executeQueryPart(index + 1);
+                        });
+                      };
+                      executeQueryPart(0);
                     });
                   }));
               }, Promise.resolve()
