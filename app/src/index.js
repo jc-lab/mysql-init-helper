@@ -27,16 +27,8 @@ const targetDbPassword = (() => {
 const adminDbPool = mysql.createPool({
   connectionLimit: 2,
   host: appEnv.DB_HOST,
-  user: appEnv.DB_ADMIN_USER,
-  password: appEnv.DB_ADMIN_PASS
-});
-
-const targetDbPool = mysql.createPool({
-  connectionLimit: 2,
-  host: appEnv.DB_HOST,
-  user: appEnv.DB_USER,
-  database: appEnv.DB_NAME,
-  password: targetDbPassword,
+  user: appEnv.DB_ADMIN_USER || appEnv.DB_USER,
+  password: appEnv.DB_ADMIN_PASS || appEnv.DB_PASS,
   multipleStatements: true
 });
 
@@ -125,13 +117,15 @@ readStdin()
         }));
       })
       .then(() => new Promise((rootResolve, rootReject) => {
-        targetDbPool.getConnection((connErr, db) => {
+        adminDbPool.getConnection((connErr, db) => {
           if (connErr) {
             rootReject(connErr);
             return ;
           }
 
-          Promise.resolve()
+          util.promisify(db.changeUser)({
+            database: appEnv.DB_NAME
+          })
             .then(() => options['sql-file'] ? options['sql-file'].reduce(
               (prev, cur) => {
                 return prev
@@ -213,14 +207,7 @@ readStdin()
     console.error(e);
     exitCode = 2;
   })
-  .finally(() => {
-    return Promise.all([
-      new Promise((resolve, reject) => {
-        adminDbPool.end(resolve);
-      }),
-      new Promise((resolve, reject) => {
-        targetDbPool.end(resolve);
-      })
-    ]);
-  })
+  .finally(() => new Promise((resolve, reject) => {
+    adminDbPool.end(resolve);
+  }))
   .then(() => process.exit(exitCode));
