@@ -123,7 +123,7 @@ readStdin()
             return ;
           }
 
-          util.promisify(db.changeUser)({
+          util.promisify(db.changeUser.bind(db))({
             database: appEnv.DB_NAME
           })
             .then(() => options['sql-file'] ? options['sql-file'].reduce(
