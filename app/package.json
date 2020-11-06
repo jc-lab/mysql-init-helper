@@ -1,6 +1,6 @@
 {
   "name": "mysql-init-helper",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "src/index.js",
   "scripts": {
@@ -8,7 +8,8 @@
     "test:lint": "eslint --ext \".js,.ts\" ./",
     "lint:fix": "eslint --ext \".js,.ts\" --fix ./src",
     "prepack": "npm run test && npm run build",
-    "build": "webpack"
+    "build": "webpack",
+    "gogo": "node src/index --sql-file=./sql.sql"
   },
   "keywords": [
     "docker",
